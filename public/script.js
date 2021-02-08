@@ -17,7 +17,7 @@ function start() {
     startBtn.style.display = 'none';
     screenDiv.style.display = '';
     socket.on('connect', () => log('Connected.'));
-    socket.on('init', () => log('Please wait... Buffering...'));
+    socket.on('init', () => log('Waiting for new messages...'));
     socket.on('disconnect', () => log('Disconnected. Try reloading the page.'));
     socket.on('message', message => log(message));
     socket.on('newfile', fileName => handleNewFile(fileName));
