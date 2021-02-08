@@ -1,9 +1,12 @@
+require('dotenv').config();
 import * as express from 'express';
 import * as basicAuth from 'express-basic-auth';
 import * as http from 'http';
+import * as https from 'https';
 import * as fs from 'fs';
 import * as path from 'path';
 import { Server } from 'socket.io';
+import * as localtunnel from 'localtunnel';
 
 const tetraKitRawPath = '../tetra-kit/recorder/raw';
 const publicPath = 'public';
@@ -11,13 +14,29 @@ const webAudioPathPrefix = '/audio';
 const indexPath = `${__dirname}/../${publicPath}/index.html`;
 const checkForChangesDiffMs = 2500;
 const maxChangesDiffMs = 10000;
+const privateKeyPath = './selfsigned.key';
+const privateCaPath = './selfsigned.crt';
 const rawExtension = '.raw';
-const users = { 'admin': 'admins3cret!' };
+const users: IUser = {};
+let history: IHistory[]  = [];
+const maxHistoryLength = 200;
+const knownFiles: IHash = {};
 
+interface IHistory {
+  fileName: string;
+  date: number;
+}
+interface IUser {
+  [username: string]: string;
+}
 interface IHash {
   [details: string]: boolean;
 }
-const knownFiles: IHash = {};
+
+
+if (process.env.USERNAME && process.env.PASSWORD) {
+  users[process.env.USERNAME] = process.env.PASSWORD;
+}
 
 if (!fs.existsSync(tetraKitRawPath)) {
   console.error('Path not found: ', tetraKitRawPath);
@@ -32,14 +51,39 @@ app.use(basicAuth({
 
 app.use(express.static(publicPath));
 app.use(webAudioPathPrefix, express.static(tetraKitRawPath));
-app.get('/', (req, res) => {
-  res.sendFile(indexPath);
-});
+app.get('/', (req, res) => res.sendFile(indexPath));
 
-const server = http.createServer(app);
+let server: http.Server;
+if (process.env.SECURE === 'true') {
+  try {
+    const privateKey = fs.readFileSync(privateKeyPath, 'utf8');
+    const certificate = fs.readFileSync(privateCaPath, 'utf8');
+    const credentials = { key: privateKey, cert: certificate };
+    server = https.createServer(credentials, app);
+  } catch (error) {
+    console.error(error, 'Make sure that you generated the server certificates using generate-cert.sh');
+    process.exit(1);
+  }
+} else {
+  server = http.createServer(app);
+}
+
 const io = new Server(server);
 
-server.listen(process.env.PORT || 8080, () => {
+if (process.env.PUBLIC === 'true' && process.env.PORT) {
+  localtunnel({ 
+    port: parseInt(process.env.PORT),
+    allow_invalid_cert: true,
+    local_key: privateKeyPath,
+    local_ca: privateCaPath,
+    local_https: process.env.SECURE === 'true' ? true : false,
+   })
+    .then(tunnel => {
+      console.log(`Public URL ready: ${tunnel.url}`);
+    });
+}
+
+server.listen(process.env.PORT, () => {
   console.log(`Server started.`, server.address());
 
   fs.watch(tetraKitRawPath, (eventType, fileName) => {
@@ -59,16 +103,13 @@ server.listen(process.env.PORT || 8080, () => {
         broadcast('Done: ' + fileName);
         const webPathToRawFileDone = webAudioPathPrefix + '/' + fileName + '.done';
         io.emit('newfile', webPathToRawFileDone);
+        addToHistory(webPathToRawFileDone);
         delete knownFiles[fileName];
       })
       knownFiles[fileName] = true;
     }
   });
 
-});
-
-io.on('connection', (socket) => {
-  socket.emit('init');
 });
 
 const waitForFile = (filePath: string) => {
@@ -91,6 +132,18 @@ const waitForFile = (filePath: string) => {
   })
 };
 
-const broadcast = (message: any) => {
-  io.emit('message', message)
+const addToHistory = (fileName:string):void => {
+  history.unshift({fileName, date: Date.now()});
+  if(history.length > maxHistoryLength) {
+    history.slice(0, maxHistoryLength);
+  }
 }
+
+const broadcast = (message: any) => {
+  io.emit('message', message);
+}
+
+io.on('connection', (socket) => {
+  socket.emit('init');
+  socket.emit('history', history);
+});

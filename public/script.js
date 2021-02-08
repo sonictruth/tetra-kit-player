@@ -2,12 +2,11 @@ const statusDiv = document.getElementById('status');
 const screenDiv = document.getElementById('screen');
 const startBtn = document.getElementById('startbtn');
 const audioEl = document.getElementById('audio');
-const canvasEl = document.getElementById('canvas');
+const historyAudioEl = document.getElementById('historyaudio');
+
+const historyEl = document.getElementById('history');
 
 const queue = new ZQueue({ max: 1 });
-const wave = new Wave();
-
-wave.fromElement('audio', 'canvas', { type: 'bars' });
 
 startBtn.addEventListener('click', () => start());
 screenDiv.style.display = 'none';
@@ -20,16 +19,63 @@ function start() {
     const socket = io();
     startBtn.style.display = 'none';
     screenDiv.style.display = '';
-    socket.on('init', () => log('Connected. Please wait...'));
-    socket.on('disconnect', () => log('Disconnected. Try to repload the page.'));
+    socket.on('connect', () => log('Connected.'));
+    socket.on('init', () => log('Please wait... Buffering...'));
+    socket.on('disconnect', () => log('Disconnected. Try reloading the page.'));
     socket.on('message', message => log(message));
-    socket.on('newfile', filename => queue.run(() => playRawUrl(filename)));
+    socket.on('newfile', fileName => handleNewFile(fileName));
+    socket.on('history', newHistory => renderHistory(newHistory));
+}
+
+function handleNewFile(fileName) {
+    queue.run(() => playRawUrl(fileName))
+        .then(() => addHistoyItem(fileName, Date.now()));
+
+}
+
+function formatTS(ts) {
+    const date = new Date(ts);
+    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+}
+
+function addHistoyItem(fileName, date) {
+    const buttonEl = document.createElement("BUTTON");
+    buttonEl.innerHTML = `&#9654; ${formatTS(date)}`;
+    buttonEl.addEventListener('click', () => {
+        playRawUrl(fileName);
+    })
+    historyEl.insertBefore(buttonEl, historyEl.firstChild);
+}
+
+function renderHistory(history) {
+    history.reverse().forEach(historyItem => {
+        addHistoyItem(historyItem.fileName, historyItem.date);
+    });
 }
 
 function playRawUrl(url) {
-    console.log(url);
     return new Promise((resolve, reject) => {
-        fetch(url).then(response => {
+        getRawAsWavBlob(url)
+            .then(urlObject => {
+                const wavesurfer = WaveSurfer.create({
+                    container: '#waveform',
+                    waveColor: 'black',
+                    cursorColor: 'green',
+                    progressColor: 'gray',
+                });
+                wavesurfer.loadBlob(urlObject);
+                wavesurfer.drawer.on('click', (e) => wavesurfer.playPause())
+                wavesurfer.on('ready', () => wavesurfer.play());
+                wavesurfer.on('finish', () => { resolve(url); wavesurfer.destroy(); });
+                wavesurfer.on('error', (error) => reject(error));
+            })
+            .catch(error => reject(error));
+    });
+}
+
+function getRawAsWavBlob(url) {
+    return fetch(url)
+        .then(response =>
             response.arrayBuffer()
                 .then((buffer) => {
                     const type = Uint16Array;
@@ -40,22 +86,17 @@ function playRawUrl(url) {
                         numChannels: 1,
                         format: 1,
                     }));
-
                     const wavBytes = new Uint8Array(wavHeader.length + buffer.byteLength);
                     wavBytes.set(wavHeader, 0);
                     wavBytes.set(new Uint8Array(buffer), wavHeader.length);
 
-                    const audio = document.querySelector('audio');
                     const blob = new Blob([wavBytes], { type: 'audio/wav' });
-                    audio.src = URL.createObjectURL(blob);
-                    audio.onended = () => resolve(url);
-                    audio.onerror = (error) => reject(error);
-                    audio.play();
-                })
-                .catch(error => reject(error));
-        });
-    });
+                    return blob;
+                    // return URL.createObjectURL(blob);
+                }
+                ))
 }
+
 
 
 function buildWaveHeader(opts) {
