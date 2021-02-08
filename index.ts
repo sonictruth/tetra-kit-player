@@ -8,7 +8,7 @@ import * as path from 'path';
 import { Server } from 'socket.io';
 import * as localtunnel from 'localtunnel';
 
-const tetraKitRawPath = TETRA_KIT_PATH || '../tetra-kit/recorder/raw';
+const tetraKitRawPath = process.env.TETRA_KIT_PATH || '../tetra-kit/recorder/raw';
 const publicPath = 'public';
 const webAudioPathPrefix = '/audio';
 const indexPath = `${__dirname}/../${publicPath}/index.html`;
