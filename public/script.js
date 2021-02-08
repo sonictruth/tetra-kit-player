@@ -27,7 +27,7 @@ function start() {
 }
 
 function handleNewFile(fileName) {
-    queue.run(() => playRawUrl(fileName))
+    queue.run(() => playRawUrl(fileName, true))
         .then((size) => addHistoyItem(fileName, Date.now(), size));
 
 }
@@ -67,14 +67,14 @@ function renderHistory(history) {
     });
 }
 
-function playRawUrl(url) {
+function playRawUrl(url, isLive = false) {
     return new Promise((resolve, reject) => {
         getRawAsWavBlob(url)
             .then(blob => {
                 const wavesurfer = WaveSurfer.create({
                     container: '#waveform',
-                    waveColor: 'black',
-                    cursorColor: 'green',
+                    waveColor: isLive ? 'darkgreen' : 'darkblue',
+                    cursorColor: isLive ? 'green' : 'blue',
                     progressColor: 'gray',
                 });
                 const destroy = () => {
