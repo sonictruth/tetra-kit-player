@@ -26,7 +26,7 @@ function start() {
 
 function handleNewFile(fileName) {
     queue.run(() => playRawUrl(fileName))
-        .then(() => addHistoyItem(fileName, Date.now()));
+        .then((size) => addHistoyItem(fileName, Date.now(), size));
 
 }
 
@@ -37,7 +37,7 @@ function formatTS(ts) {
 
 function formatSize(size) {
     if (size) {
-        return ((size / (sampleRate * 2)) + 's').padStart('10', ' ');
+        return ((size / (sampleRate * 2)).toFixed(2) + 's').padStart('10', ' ');
     } else {
         return '';
     }
@@ -61,7 +61,7 @@ function renderHistory(history) {
 function playRawUrl(url) {
     return new Promise((resolve, reject) => {
         getRawAsWavBlob(url)
-            .then(urlObject => {
+            .then(blob => {
                 const wavesurfer = WaveSurfer.create({
                     container: '#waveform',
                     waveColor: 'black',
@@ -69,11 +69,11 @@ function playRawUrl(url) {
                     progressColor: 'gray',
                 });
                 const done = () => {
-                    resolve(url);
+                    resolve(blob.size);
                     wavesurfer.destroy();
                 }
 
-                wavesurfer.loadBlob(urlObject);
+                wavesurfer.loadBlob(blob);
 
                 wavesurfer.drawer.on('click', (e) => wavesurfer.playPause());
                 wavesurfer.drawer.on('dblclick', (e) => done());
