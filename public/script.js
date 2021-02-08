@@ -4,9 +4,11 @@ const startBtn = document.getElementById('startbtn');
 const historyEl = document.getElementById('history');
 const sampleRate = 8000;
 const queue = new ZQueue({ max: 1 });
+const waveSurferPlayers = {};
 
 startBtn.addEventListener('click', () => start());
 screenDiv.style.display = 'none';
+
 
 const log = msg => {
     statusDiv.innerHTML = msg;
@@ -44,15 +46,22 @@ function formatSize(size) {
 }
 function addHistoyItem(fileName, date, size) {
     const buttonEl = document.createElement("BUTTON");
-    buttonEl.innerHTML = `&#9654; ${formatTS(date)} ${formatSize(size)}`;
+    let title = `${formatTS(date)} ${formatSize(size)} `;
     buttonEl.addEventListener('click', () => {
-        playRawUrl(fileName);
+        const player = waveSurferPlayers[fileName];
+        if(player) {
+            player.destroy();
+            buttonEl.innerHTML = title + ' &#9654;';
+        } else {
+            playRawUrl(fileName);
+            buttonEl.innerHTML = title + ' &#9632;';
+        }
     })
+    buttonEl.innerHTML = title +  ' &#9654;';
     historyEl.insertBefore(buttonEl, historyEl.firstChild);
 }
 
 function renderHistory(history) {
-    console.log(history);
     history.reverse().forEach(historyItem => {
         addHistoyItem(historyItem.fileName, historyItem.date, historyItem.size);
     });
@@ -68,17 +77,23 @@ function playRawUrl(url) {
                     cursorColor: 'green',
                     progressColor: 'gray',
                 });
-                const done = () => {
+                const destroy = () => {
                     resolve(blob.size);
-                    wavesurfer.destroy();
+                    delete waveSurferPlayers[url];
+                }
+
+                const ready = () => {
+                    wavesurfer.play();
+                    waveSurferPlayers[url] = wavesurfer;
                 }
 
                 wavesurfer.loadBlob(blob);
 
                 wavesurfer.drawer.on('click', (e) => wavesurfer.playPause());
-                wavesurfer.drawer.on('dblclick', (e) => done());
-                wavesurfer.on('ready', () => wavesurfer.play());
-                wavesurfer.on('finish', () => done());
+                wavesurfer.drawer.on('dblclick', (e) => wavesurfer.destroy());
+                wavesurfer.on('ready', () => ready());
+                wavesurfer.on('finish', () => wavesurfer.destroy()); 
+                wavesurfer.on('destroy', () => destroy());
                 wavesurfer.on('error', (error) => reject(error));
             })
             .catch(error => reject(error));
