@@ -54,7 +54,7 @@ function addHistoyItem(fileName, date, size) {
             buttonEl.innerHTML = title + ' &#9654;';
         } else {
             playRawUrl(fileName);
-            buttonEl.innerHTML = title + ' &#9632;';
+            buttonEl.innerHTML = title + ' ×';
         }
     })
     buttonEl.innerHTML = title +  ' &#9654;';
@@ -68,6 +68,7 @@ function renderHistory(history) {
 }
 
 function playRawUrl(url, isLive = false) {
+   
     return new Promise((resolve, reject) => {
         getRawAsWavBlob(url)
             .then(blob => {
@@ -78,21 +79,23 @@ function playRawUrl(url, isLive = false) {
                     progressColor: 'gray',
                 });
                 const destroy = () => {
+                    log('Idle...');
                     resolve(blob.size);
                     delete waveSurferPlayers[url];
                 }
 
                 const ready = () => {
+                    log('Playing...');
                     wavesurfer.play();
                     waveSurferPlayers[url] = wavesurfer;
                 }
 
                 wavesurfer.loadBlob(blob);
-
+                // wavesurfer.drawer.on('audioprocess', (e) => console.log('time'));
                 wavesurfer.drawer.on('click', (e) => wavesurfer.playPause());
-                wavesurfer.drawer.on('dblclick', (e) => wavesurfer.destroy());
+                // wavesurfer.drawer.on('dblclick', (e) => wavesurfer.destroy());
                 wavesurfer.on('ready', () => ready());
-                wavesurfer.on('finish', () => wavesurfer.destroy()); 
+                isLive ? wavesurfer.on('finish', () => wavesurfer.destroy()) : null; 
                 wavesurfer.on('destroy', () => destroy());
                 wavesurfer.on('error', (error) => reject(error));
             })
