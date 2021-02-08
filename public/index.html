@@ -12,7 +12,7 @@
 
     <meta charset="UTF-8" />
     <link rel="stylesheet" href="https://unpkg.com/98.css" />
-  
+
     <style>
         #container {
             max-width: 600px;
@@ -24,8 +24,8 @@
             width: 100%;
         }
 
-
-        #history button{
+        #history button {
+            white-space: pre;
             width: 100%;
             font-family: monospace;
         }
@@ -51,12 +51,21 @@
                     <div id="status"></div>
 
                     <hr />
-                    <div id="waveform"></div>
-                    History:
-                    <hr />
-                    <div id="history">
-                    </div>
-                  
+                    <table>
+                        <tr>
+                            <td width="50%">History</td>
+                            <td width="50%">Click waveform to seek/play/pause - DblClick to delete it</td>
+                        </tr>
+                        <tr>
+                            <td valign="top">
+                                <div id="history" >
+                                </div>
+                            </td>
+                            <td valign="top">
+                                <div id="waveform"></div>
+                            </td>
+                        </tr>
+                    </table>
 
                 </div>
                 <button id="startbtn">START</button>

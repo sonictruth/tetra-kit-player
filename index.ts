@@ -19,12 +19,14 @@ const privateCaPath = './selfsigned.crt';
 const rawExtension = '.raw';
 const users: IUser = {};
 let history: IHistory[]  = [];
-const maxHistoryLength = 200;
+const maxHistoryLength = 2000;
+const ignoreFileSize = 10000;
 const knownFiles: IHash = {};
 
 interface IHistory {
   fileName: string;
   date: number;
+  size: number;
 }
 interface IUser {
   [username: string]: string;
@@ -94,16 +96,16 @@ server.listen(process.env.PORT, () => {
       !knownFiles[fileName] &&
       fs.existsSync(fullPathToRawFile)
     ) {
-      // console.log('Waiting for: ', fileName);
-      broadcast('New: ' + fileName);
-      waitForFile(fullPathToRawFile).then(() => {
+
+      broadcast('Receiving ' + fileName);
+      waitForFile(fullPathToRawFile).then( fileSize => {
         const fullPathToRawFileDone = fullPathToRawFile + '.done';
         fs.renameSync(fullPathToRawFile, fullPathToRawFileDone);
-        // console.log('Done: ', fileName);
-        broadcast('Done: ' + fileName);
+
+        broadcast('Streaming ' + fileName);
         const webPathToRawFileDone = webAudioPathPrefix + '/' + fileName + '.done';
         io.emit('newfile', webPathToRawFileDone);
-        addToHistory(webPathToRawFileDone);
+        addToHistory(webPathToRawFileDone, <number>fileSize);
         delete knownFiles[fileName];
       })
       knownFiles[fileName] = true;
@@ -118,12 +120,13 @@ const waitForFile = (filePath: string) => {
 
     function checkLoop() {
       clearTimeout(timeoutId);
-      const lastChange = fs.statSync(filePath).mtimeMs;
+      const stat = fs.statSync(filePath);
+      const lastChange = stat.mtimeMs;
       const now = Date.now()
       const diff = now - lastChange;
 
       if (diff > maxChangesDiffMs) {
-        resolve(lastChange);
+        resolve(stat.size);
       } else {
         timeoutId = setTimeout(checkLoop, checkForChangesDiffMs);
       }
@@ -132,8 +135,11 @@ const waitForFile = (filePath: string) => {
   })
 };
 
-const addToHistory = (fileName:string):void => {
-  history.unshift({fileName, date: Date.now()});
+const addToHistory = (fileName:string, size: number = 0):void => {
+  if(size < ignoreFileSize) {
+    return;
+  }
+  history.unshift({fileName, date: Date.now(), size});
   if(history.length > maxHistoryLength) {
     history.slice(0, maxHistoryLength);
   }

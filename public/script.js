@@ -2,7 +2,7 @@ const statusDiv = document.getElementById('status');
 const screenDiv = document.getElementById('screen');
 const startBtn = document.getElementById('startbtn');
 const historyEl = document.getElementById('history');
-
+const sampleRate = 8000;
 const queue = new ZQueue({ max: 1 });
 
 startBtn.addEventListener('click', () => start());
@@ -35,9 +35,16 @@ function formatTS(ts) {
     return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
 }
 
-function addHistoyItem(fileName, date) {
+function formatSize(size) {
+    if (size) {
+        return ((size / (sampleRate * 2)) + 's').padStart('10', ' ');
+    } else {
+        return '';
+    }
+}
+function addHistoyItem(fileName, date, size) {
     const buttonEl = document.createElement("BUTTON");
-    buttonEl.innerHTML = `&#9654; ${formatTS(date)}`;
+    buttonEl.innerHTML = `&#9654; ${formatTS(date)} ${formatSize(size)}`;
     buttonEl.addEventListener('click', () => {
         playRawUrl(fileName);
     })
@@ -45,8 +52,9 @@ function addHistoyItem(fileName, date) {
 }
 
 function renderHistory(history) {
+    console.log(history);
     history.reverse().forEach(historyItem => {
-        addHistoyItem(historyItem.fileName, historyItem.date);
+        addHistoyItem(historyItem.fileName, historyItem.date, historyItem.size);
     });
 }
 
@@ -60,10 +68,17 @@ function playRawUrl(url) {
                     cursorColor: 'green',
                     progressColor: 'gray',
                 });
+                const done = () => {
+                    resolve(url);
+                    wavesurfer.destroy();
+                }
+
                 wavesurfer.loadBlob(urlObject);
-                wavesurfer.drawer.on('click', (e) => wavesurfer.playPause())
+
+                wavesurfer.drawer.on('click', (e) => wavesurfer.playPause());
+                wavesurfer.drawer.on('dblclick', (e) => done());
                 wavesurfer.on('ready', () => wavesurfer.play());
-                wavesurfer.on('finish', () => { resolve(url); wavesurfer.destroy(); });
+                wavesurfer.on('finish', () => done());
                 wavesurfer.on('error', (error) => reject(error));
             })
             .catch(error => reject(error));
@@ -79,7 +94,7 @@ function getRawAsWavBlob(url) {
                     const wavHeader = new Uint8Array(buildWaveHeader({
                         numFrames: buffer.byteLength / type.BYTES_PER_ELEMENT,
                         bytesPerSample: type.BYTES_PER_ELEMENT,
-                        sampleRate: 8000,
+                        sampleRate: sampleRate,
                         numChannels: 1,
                         format: 1,
                     }));
@@ -89,9 +104,8 @@ function getRawAsWavBlob(url) {
 
                     const blob = new Blob([wavBytes], { type: 'audio/wav' });
                     return blob;
-                    // return URL.createObjectURL(blob);
                 }
-                ))
+                ));
 }
 
 
