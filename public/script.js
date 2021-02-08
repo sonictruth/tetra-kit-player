@@ -1,9 +1,6 @@
 const statusDiv = document.getElementById('status');
 const screenDiv = document.getElementById('screen');
 const startBtn = document.getElementById('startbtn');
-const audioEl = document.getElementById('audio');
-const historyAudioEl = document.getElementById('historyaudio');
-
 const historyEl = document.getElementById('history');
 
 const queue = new ZQueue({ max: 1 });
