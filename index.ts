@@ -57,7 +57,7 @@ fs.readdirSync(tetraKitRawPath)
     }
   })
   .sort((a, b) => a.time - b.time)
-  .forEach(fileObj => addToHistory(fileObj.name, fileObj.size, fileObj.time));
+  .forEach(fileObj => addToHistory( path.join(fileObj.name), fileObj.size, fileObj.time));
 
 
 const app = express();
@@ -104,7 +104,7 @@ server.listen(process.env.PORT, () => {
   console.log(`Server started.`, server.address());
 
   fs.watch(tetraKitRawPath, (eventType, fileName) => {
-    const fullPathToRawFile = path.join(tetraKitRawPath, fileName);
+    const fullPathToRawFile = path.join(webAudioPathPrefix, tetraKitRawPath), fileName);
     if (
       eventType === 'rename' &&
       fileName.endsWith(rawExtension) &&
@@ -118,7 +118,7 @@ server.listen(process.env.PORT, () => {
         fs.renameSync(fullPathToRawFile, fullPathToRawFileDone);
 
         broadcast('Streaming ' + fileName);
-        const webPathToRawFileDone = webAudioPathPrefix + '/' + fileName + doneExtension;
+        const webPathToRawFileDone = path.join(webAudioPathPrefix,fileName) + doneExtension;
         io.emit('newfile', webPathToRawFileDone);
         addToHistory(webPathToRawFileDone, fileStat.size, fileStat.mtime.getTime());
         delete knownFiles[fileName];
