@@ -17,8 +17,9 @@ const maxChangesDiffMs = 10000;
 const privateKeyPath = './selfsigned.key';
 const privateCaPath = './selfsigned.crt';
 const rawExtension = '.raw';
+const doneExtension = '.done';
 const users: IUser = {};
-let history: IHistory[]  = [];
+let history: IHistory[] = [];
 const maxHistoryLength = 2000;
 const ignoreFileSize = 10000;
 const knownFiles: IHash = {};
@@ -44,6 +45,20 @@ if (!fs.existsSync(tetraKitRawPath)) {
   console.error('Path not found: ', tetraKitRawPath);
   process.exit(1);
 }
+
+fs.readdirSync(tetraKitRawPath)
+  .filter(fileName => (fileName.endsWith(rawExtension) || fileName.endsWith(doneExtension)))
+  .map(fileName => {
+    const stat = fs.statSync(path.join(tetraKitRawPath, fileName));
+    return {
+      name: fileName,
+      size: stat.size,
+      time: stat.mtime.getTime(),
+    }
+  })
+  .sort((a, b) => a.time - b.time)
+  .forEach(fileObj => addToHistory(fileObj.name, fileObj.size, fileObj.time));
+
 
 const app = express();
 app.use(basicAuth({
@@ -73,13 +88,13 @@ if (process.env.SECURE === 'true') {
 const io = new Server(server);
 
 if (process.env.PUBLIC === 'true' && process.env.PORT) {
-  localtunnel({ 
+  localtunnel({
     port: parseInt(process.env.PORT),
     allow_invalid_cert: true,
     local_key: privateKeyPath,
     local_ca: privateCaPath,
     local_https: process.env.SECURE === 'true' ? true : false,
-   })
+  })
     .then(tunnel => {
       console.log(`Public URL ready: ${tunnel.url}`);
     });
@@ -98,14 +113,14 @@ server.listen(process.env.PORT, () => {
     ) {
 
       broadcast('Receiving ' + fileName);
-      waitForFile(fullPathToRawFile).then( fileSize => {
-        const fullPathToRawFileDone = fullPathToRawFile + '.done';
+      waitForFile(fullPathToRawFile).then(fileStat => {
+        const fullPathToRawFileDone = fullPathToRawFile + doneExtension;
         fs.renameSync(fullPathToRawFile, fullPathToRawFileDone);
 
         broadcast('Streaming ' + fileName);
-        const webPathToRawFileDone = webAudioPathPrefix + '/' + fileName + '.done';
+        const webPathToRawFileDone = webAudioPathPrefix + '/' + fileName + doneExtension;
         io.emit('newfile', webPathToRawFileDone);
-        addToHistory(webPathToRawFileDone, <number>fileSize);
+        addToHistory(webPathToRawFileDone, fileStat.size, fileStat.mtime.getTime());
         delete knownFiles[fileName];
       })
       knownFiles[fileName] = true;
@@ -114,7 +129,7 @@ server.listen(process.env.PORT, () => {
 
 });
 
-const waitForFile = (filePath: string) => {
+function waitForFile(filePath: string): Promise<fs.Stats> {
   return new Promise((resolve, reject) => {
     let timeoutId: NodeJS.Timeout;
 
@@ -126,7 +141,7 @@ const waitForFile = (filePath: string) => {
       const diff = now - lastChange;
 
       if (diff > maxChangesDiffMs) {
-        resolve(stat.size);
+        resolve(stat);
       } else {
         timeoutId = setTimeout(checkLoop, checkForChangesDiffMs);
       }
@@ -135,17 +150,17 @@ const waitForFile = (filePath: string) => {
   })
 };
 
-const addToHistory = (fileName:string, size: number = 0):void => {
-  if(size < ignoreFileSize) {
+function addToHistory(fileName: string, size: number = 0, timestamp: number): void {
+  if (size < ignoreFileSize) {
     return;
   }
-  history.unshift({fileName, date: Date.now(), size});
-  if(history.length > maxHistoryLength) {
+  history.unshift({ fileName, date: timestamp, size });
+  if (history.length > maxHistoryLength) {
     history.slice(0, maxHistoryLength);
   }
 }
 
-const broadcast = (message: any) => {
+function broadcast(message: any) {
   io.emit('message', message);
 }
 
