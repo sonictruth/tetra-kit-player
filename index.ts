@@ -9,6 +9,9 @@ import { Server } from 'socket.io';
 import * as localtunnel from 'localtunnel';
 
 const tetraKitRawPath = process.env.TETRA_KIT_PATH || '../tetra-kit/recorder/raw';
+const isSecure = process.env.SECURE === 'true' ? true : false;
+const isPublic = process.env.PUBLIC === 'true' ? true : false;
+const serverPort = process.env.PORT;
 const publicPath = 'public';
 const webAudioPathPrefix = '/audio';
 const indexPath = `${__dirname}/../${publicPath}/index.html`;
@@ -71,7 +74,7 @@ app.use(webAudioPathPrefix, express.static(tetraKitRawPath));
 app.get('/', (req, res) => res.sendFile(indexPath));
 
 let server: http.Server;
-if (process.env.SECURE === 'true') {
+if (isSecure) {
   try {
     const privateKey = fs.readFileSync(privateKeyPath, 'utf8');
     const certificate = fs.readFileSync(privateCaPath, 'utf8');
@@ -87,21 +90,23 @@ if (process.env.SECURE === 'true') {
 
 const io = new Server(server);
 
-if (process.env.PUBLIC === 'true' && process.env.PORT) {
+if (isPublic && serverPort) {
   localtunnel({
-    port: parseInt(process.env.PORT),
+    port: parseInt(serverPort),
     allow_invalid_cert: true,
     local_key: privateKeyPath,
     local_ca: privateCaPath,
-    local_https: process.env.SECURE === 'true' ? true : false,
+    local_https: isSecure,
   })
-    .then(tunnel => {
+    .then((tunnel: any) => {
       console.log(`Public URL ready: ${tunnel.url}`);
     });
 }
 
-server.listen(process.env.PORT, () => {
-  console.log(`Server started.`, server.address());
+server.listen(serverPort, () => {
+  const port = (<any>server.address()).port;
+  const type = isSecure ? 'https://' : 'http://';
+  console.log(`Server started: ${type}localhost:${port}`);
 
   fs.watch(tetraKitRawPath, (eventType, fileName) => {
     const fullPathToRawFile = path.join(tetraKitRawPath, fileName);
