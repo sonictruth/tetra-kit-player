@@ -42,14 +42,14 @@ fs.readdirSync(tetraKitRawPath)
     .filter(fileName => (fileName.endsWith(rawExtension) || fileName.endsWith(doneExtension)))
     .map(fileName => {
         const stat = fs.statSync(path.join(tetraKitRawPath, fileName));
-        return {
-            name: fileName,
+        return <SimpleRecording>{
+            url: webAudioPathPrefix + '/' + fileName,
             size: stat.size,
-            time: stat.mtime.getTime(),
+            ts: stat.mtime.getTime(),
         }
     })
-    .sort((a, b) => a.time - b.time)
-    .forEach(fileObj => addToHistory(webAudioPathPrefix + '/' + fileObj.name, fileObj.size, fileObj.time));
+    .sort((a, b) => a.ts - b.ts)
+    .forEach(recording => addToHistory(recording));
 
 
 const app = express();
@@ -117,8 +117,13 @@ server.listen(serverPort, () => {
 
                 broadcast('Streaming ' + fileName);
                 const recordingURL = webAudioPathPrefix + '/' + fileName + doneExtension;
-                io.emit('newfile', recordingURL);
-                addToHistory(recordingURL, fileStat.size, fileStat.mtime.getTime());
+                const newRecording: SimpleRecording = {
+                    url: recordingURL,
+                    size: fileStat.size,
+                    ts: fileStat.mtime.getTime(),
+                }
+                addToHistory( newRecording );
+                io.emit('newRecording', newRecording);
                 delete knownFiles[fileName];
             })
             knownFiles[fileName] = true;
@@ -127,11 +132,11 @@ server.listen(serverPort, () => {
 });
 
 
-function addToHistory(url: string, size: number = 0, timestamp: number): void {
-    if (size < ignoreFileSize) {
+function addToHistory(recording: SimpleRecording): void {
+    if (recording.size < ignoreFileSize) {
         return;
     }
-    history.unshift({ url, ts: timestamp, size });
+    history.unshift(recording);
     if (history.length > maxHistoryLength) {
         history.slice(0, maxHistoryLength);
     }
@@ -144,5 +149,10 @@ function broadcast(message: any) {
 io.on('connection', socket => {
     socket.emit('init');
     socket.on('getHistory', (cb: Function) => cb(history));
+    setInterval( ()=> {
+        const random = history[Math.floor(Math.random() * history.length)];
+        random.ts = Date.now();
+        socket.emit('newRecording', random);
+    }, 3000);
 });
 

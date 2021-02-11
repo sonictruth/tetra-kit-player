@@ -1,15 +1,6 @@
-import React, { 
-    useState, 
-    useEffect, 
-    useRef
-} from "react";
+import React, { useState, useEffect, useRef } from "react";
 import WaveSurfer from "wavesurfer.js";
-import { 
-    Button,
-    Tooltip,
-    Row,
-    Col
-} from "antd";
+import { Button, Tooltip, Row, Col } from "antd";
 import {
     PlayCircleOutlined,
     PauseCircleOutlined,
@@ -20,35 +11,50 @@ import { getRawAsWavBlob } from "./utils";
 
 import "./Player.css";
 
-export default (props: { url: string }) => {
+export default (props: {
+    url: string;
+    height: number;
+    onFinish?: Function;
+    onPlayPause?: Function;
+}) => {
+
+    const onPlayPause = props.onPlayPause || function () { };
     const waveSurferDivRef = useRef<HTMLDivElement>();
     const waveSurferRef = useRef(null);
-    const blob = useRef<Blob>();
     const [isPlaying, setIsPlaying] = useState<boolean>(false);
+    const onFinish = props.onFinish || function () {
+        setIsPlaying(false);
+        waveSurferRef.current.stop();
+
+     };
     useEffect(() => {
         if (waveSurferDivRef.current) {
             waveSurferRef.current = WaveSurfer.create({
-                height: 30,
+                height: props.height,
                 backgroundColor: "#fafafa",
                 container: waveSurferDivRef.current,
             });
-            return () => { 
-                waveSurferRef.current.destroy()
+            if (props.url) {
+                getRawAsWavBlob(props.url).then((newBlob) => {
+                    waveSurferRef.current.loadBlob(newBlob);
+                    waveSurferRef.current.on("ready", () =>
+                        isPlaying ? waveSurferRef.current.play() : null
+                    );
+                    waveSurferRef.current.on("play", ()=> onPlayPause(true));
+                    waveSurferRef.current.on("pause", ()=> onPlayPause(false));
+                    waveSurferRef.current.on("finish", () => onFinish());
+                    waveSurferRef.current.on("error", () => onFinish());
+                }).catch( () => onFinish());
+            }
+            return () => {
+                waveSurferRef.current.destroy();
             };
         }
     }, [props.url]);
     const handlePlayPause = () => {
-        if (!blob.current) {
-            getRawAsWavBlob(props.url)
-                .then(newBlob => {
-                    blob.current = newBlob;
-                    waveSurferRef.current.loadBlob(blob.current);
-                    waveSurferRef.current.once('ready', () => waveSurferRef.current.play());
-                    waveSurferRef.current.on('play', () => setIsPlaying(true));
-                    waveSurferRef.current.on('pause', () => setIsPlaying(false));
-                });
-        } else {
-            waveSurferRef.current.playPause();
+        setIsPlaying(!isPlaying);
+        if (waveSurferRef.current.isReady) {
+            !isPlaying ? waveSurferRef.current.play() : waveSurferRef.current.pause();
         }
     };
     const handleDownload = () => {
@@ -57,13 +63,15 @@ export default (props: { url: string }) => {
     return (
         <>
             <div className="player">
-                <Row>
+                <Row align="middle">
                     <Col flex="30px">
-                        <Tooltip title={isPlaying ? 'Stop' : 'Play'}>
+                        <Tooltip title={isPlaying ? "Stop" : "Play"}>
                             <Button
                                 onClick={() => handlePlayPause()}
                                 shape="circle"
-                                icon={isPlaying ? <PauseCircleOutlined /> : <PlayCircleOutlined />}
+                                icon={
+                                    isPlaying ? <PauseCircleOutlined /> : <PlayCircleOutlined />
+                                }
                             />
                         </Tooltip>
                     </Col>

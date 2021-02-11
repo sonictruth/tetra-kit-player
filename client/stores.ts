@@ -4,6 +4,7 @@ import io from 'socket.io-client';
 import { convertSimpleRecordings } from './utils';
 
 interface HistoryState extends State {
+    socket: SocketIOClient.Socket,
     recordings: Recording[],
     load: () => void,
     add: (recording: Recording) => void,
@@ -19,6 +20,7 @@ socket.on('newfile', fileName => console.log(fileName));
 
 
 export const useHistoryStore = create<HistoryState>(set => ({
+    socket: socket,
     recordings: [],
     load: () => {
         socket.emit('getHistory', (simpleRecordings: SimpleRecording[]) => {

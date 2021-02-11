@@ -59,7 +59,7 @@ const columns: ColumnsType<Recording> = [
         title: "Audio",
         width: "30%",
         dataIndex: "url",
-        render: (url) => <Player url={url} />,
+        render: (url) => <Player height={30} url={url} />,
     },
 ];
 
@@ -72,10 +72,6 @@ export default () => {
   
     useEffect(() => {
         loadHistory();
-        setTimeout( ()=> {
-            console.log('xxxx');
-            add({ts: 1, usageMarker: 1, size: 1, cid: 1, url: '1'});
-        }, 3000)
     }, []);
 
 

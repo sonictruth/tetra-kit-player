@@ -35,19 +35,18 @@ export const getNumberColor = (number: number): string => {
 }
 
 export const convertSimpleRecordings =
-    (simpleRecordings: SimpleRecording[]): Recording[] => {
-        return simpleRecordings.map((recording: SimpleRecording): Recording => {
-            const cidAndUm = getCIDandUMfromURL(recording.url);
-            return {
-                url: recording.url,
-                size: recording.size,
-                ts: recording.ts,
-                ...cidAndUm
-            }
-        }
-        )
-    }
+    (simpleRecordings: SimpleRecording[]): Recording[] =>
+        simpleRecordings.map(convertSimpleRecording)
 
+export const convertSimpleRecording = (simpleRecording: SimpleRecording): Recording => {
+    const cidAndUm = getCIDandUMfromURL(simpleRecording.url);
+    return {
+        url: simpleRecording.url,
+        size: simpleRecording.size,
+        ts: simpleRecording.ts,
+        ...cidAndUm
+    }
+}
 export const getCIDandUMfromURL = (url: string): { cid: number, usageMarker: number } => {
     const matches = url.match(/\d+/g);
     const usageMarker = parseInt(matches[3]);
@@ -58,7 +57,7 @@ export const getCIDandUMfromURL = (url: string): { cid: number, usageMarker: num
     }
 }
 
-export const timestampToDate = (timestamp: number) : {date: string, time: string} => {
+export const timestampToDate = (timestamp: number): { date: string, time: string } => {
     const date = new Date(timestamp);
     return {
         date: date.toLocaleDateString(),

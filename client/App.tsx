@@ -13,11 +13,11 @@ const {
 } = Layout;
 
 import History from './History';
+import LivePlayer from './LivePlayer';
 
 import logo from './logo.svg';
 
 import './App.css';
-
 
 export default () => {
     return <>
@@ -35,6 +35,7 @@ export default () => {
             <Content>
 
                 <div className="site-layout-content">
+                    <LivePlayer/>
                     <History/>
                 </div>
 
