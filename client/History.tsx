@@ -5,7 +5,7 @@ import React, {
 import { ColumnsType } from "antd/es/table";
 import {
     getNumberColor,
-    timestampToDateString,
+    timestampToDate,
     sizeToSeconds,
 } from "./utils";
 import {
@@ -18,11 +18,15 @@ import { SearchOutlined } from "@ant-design/icons";
 import Player from "./Player";
 import NumberAvatar from "./NumberAvatar";
 
+import { useHistoryStore } from "./stores";
+
+
+
 const columns: ColumnsType<Recording> = [
     {
         title: "Time",
         dataIndex: "ts",
-        render: (value: number) => timestampToDateString(value),
+        render: (ts: number) => <><pre>{timestampToDate(ts).date}<br />{timestampToDate(ts).time}</pre></>,
         sorter: {
             compare: (a, b) => a.ts - b.ts,
         },
@@ -59,9 +63,22 @@ const columns: ColumnsType<Recording> = [
     },
 ];
 
-export default (props: { recordings: Recording[] }) => {
+export default () => {
     const [searchText, setSearchText] = useState<string>();
     const [searchedColumn, setSearchedColumn] = useState<string>();
+    const loadHistory = useHistoryStore(state => state.load);
+    const add = useHistoryStore(state => state.add);
+    const recordings = useHistoryStore(state => state.recordings);
+  
+    useEffect(() => {
+        loadHistory();
+        setTimeout( ()=> {
+            console.log('xxxx');
+            add({ts: 1, usageMarker: 1, size: 1, cid: 1, url: '1'});
+        }, 3000)
+    }, []);
+
+
     function handleSearch(selectedKeys, confirm, dataIndex) {
         confirm();
         setSearchText(selectedKeys[0]);
@@ -148,7 +165,7 @@ export default (props: { recordings: Recording[] }) => {
                 pagination={{ position: ["topRight", "bottomRight"], pageSize: 5 }}
                 rowKey="ts"
                 columns={columns}
-                dataSource={props.recordings}
+                dataSource={recordings}
             />
         </>
     );

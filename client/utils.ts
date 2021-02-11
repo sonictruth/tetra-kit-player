@@ -58,9 +58,12 @@ export const getCIDandUMfromURL = (url: string): { cid: number, usageMarker: num
     }
 }
 
-export const timestampToDateString = (timestamp: number) => {
+export const timestampToDate = (timestamp: number) : {date: string, time: string} => {
     const date = new Date(timestamp);
-    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+    return {
+        date: date.toLocaleDateString(),
+        time: date.toLocaleTimeString(),
+    };
 }
 
 export const sizeToSeconds = (size: number): string => {

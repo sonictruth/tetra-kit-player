@@ -1,6 +1,15 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { 
+    useState, 
+    useEffect, 
+    useRef
+} from "react";
 import WaveSurfer from "wavesurfer.js";
-import { Button, Tooltip, Row, Col } from "antd";
+import { 
+    Button,
+    Tooltip,
+    Row,
+    Col
+} from "antd";
 import {
     PlayCircleOutlined,
     PauseCircleOutlined,
