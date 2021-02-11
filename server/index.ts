@@ -149,10 +149,12 @@ function broadcast(message: any) {
 io.on('connection', socket => {
     socket.emit('init');
     socket.on('getHistory', (cb: Function) => cb(history));
+    /*
     setInterval( ()=> {
         const random = history[Math.floor(Math.random() * history.length)];
         random.ts = Date.now();
         socket.emit('newRecording', random);
     }, 3000);
+    */
 });
 
