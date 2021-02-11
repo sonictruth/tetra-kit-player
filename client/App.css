@@ -1,0 +1,17 @@
+.site-layout-content {
+  height: 100%;
+  padding: 24px;
+  background: #fff;
+}
+.title {
+  color: white;
+  font-size: 30px;
+}
+.logo {
+    height: 30px;
+}
+
+html, body, #root, .App {
+    min-height: 100%;
+    min-width: 800px;
+}

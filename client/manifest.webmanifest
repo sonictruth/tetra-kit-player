@@ -1,0 +1,10 @@
+{
+  "name": "TETRA Kit Player",
+  "short_name": "TKPlayer",
+  "theme_color": "#000000",
+  "background_color": "#ffffff",
+  "display": "fullscreen",
+  "orientation": "portrait",
+  "scope": "/",
+  "start_url": "/"
+}
