@@ -1,0 +1,28 @@
+{
+  "compilerOptions": {
+    "lib": [
+      "es6",
+      "dom"
+    ],
+    "allowSyntheticDefaultImports": true,
+    "jsx": "react",
+    "module": "es6",
+    "target": "es6",
+    "moduleResolution": "node",
+    "sourceMap": true,
+    "outDir": "../dist/public",
+    "typeRoots": [
+      "../typings",
+      "../node_modules/@types"
+    ],
+    "baseUrl": ".",
+    "paths": {
+      "*": [
+        "../node_modules/*"
+      ]
+    }
+  },
+  "include": [
+    "./**/*"
+  ]
+}
