@@ -11,7 +11,6 @@
   "license": "ISC",
   "dependencies": {
     "antd": "^4.12.2",
-    "dotenv": "^8.2.0",
     "express": "^4.17.1",
     "express-basic-auth": "^1.2.0",
     "localtunnel": "^2.0.1",
@@ -19,9 +18,11 @@
     "react-dom": "^17.0.1",
     "socket.io": "^3.1.1",
     "socket.io-client": "^3.1.1",
+    "wavesurfer.js": "^4.4.0",
     "ws": "^7.4.3"
   },
   "devDependencies": {
+    "dotenv": "^8.2.0",
     "@babel/core": "^7.12.13",
     "@babel/preset-env": "^7.12.13",
     "@types/antd": "^1.0.0",

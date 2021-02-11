@@ -61,8 +61,9 @@ app.use(basicAuth({
     challenge: true,
 }));
 
-app.use(bundler.middleware());
 app.use(webAudioPathPrefix, express.static(tetraKitRawPath));
+app.use(bundler.middleware());
+
 
 let server: http.Server;
 if (isSecure) {
