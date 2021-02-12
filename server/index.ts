@@ -171,7 +171,7 @@ try {
             io.emit('cmceLog', line);
         }
     });
-} catch (error) {
+} catch (error:any) {
     console.error(error);
 }
 
