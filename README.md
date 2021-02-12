@@ -4,7 +4,7 @@ TKP is web application that streams events and files produced by [tetra-kit](htt
 
 It's like a PVR for tetra-kit. You can pause the live stream re-listen to old messages search, sort, download them.
 
-Also features a live CMCE indicator.
+Also it features small live CMCE indicator (top right).
 
 <img src="sscreen3.png" width="500">
 
