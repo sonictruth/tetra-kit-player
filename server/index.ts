@@ -164,9 +164,9 @@ io.on('connection', socket => {
 try {
     const tail = new Tail(tetraKitLogPath);
     tail.on('error', (error) => console.error(error));
-    tail.on('line', (line) => {
-        line = JSON.parse(line);
-        if (line.service === 'CMCE'
+    tail.on('line', (line:string) => {
+        const parsedLine = JSON.parse(line);
+        if (parsedLine.service === 'CMCE'
         ) {
             io.emit('cmceLog', line);
         }
