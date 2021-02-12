@@ -14,10 +14,12 @@ const {
 
 import History from './History';
 import LivePlayer from './LivePlayer';
+import CmceLog from './CmceLog';
 
 import logo from './logo.svg';
 
 import './App.css';
+
 
 export default () => {
     return <>
@@ -30,13 +32,18 @@ export default () => {
                     <Col flex="auto">
                         <div className="title">TETRA KIT Player</div>
                     </Col>
+                    <Col flex="330px" >
+                        <div style={{ textAlign: 'right', color: 'white' }}>
+                            <CmceLog />
+                        </div>
+                    </Col>
                 </Row>
             </Header>
             <Content>
 
                 <div className="site-layout-content">
-                    <LivePlayer/>
-                    <History/>
+                    <LivePlayer />
+                    <History />
                 </div>
 
             </Content>

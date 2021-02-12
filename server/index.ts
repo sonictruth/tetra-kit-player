@@ -5,12 +5,15 @@ import * as http from 'http';
 import * as https from 'https';
 import * as fs from 'fs';
 import * as path from 'path';
+
+import { Tail } from 'tail';
 import { Server } from 'socket.io';
 import * as localtunnel from 'localtunnel';
 import waitForFile from './waitForFile';
 import * as Bundler from 'parcel-bundler';
 
 const tetraKitRawPath = process.env.TETRA_KIT_PATH || '';
+const tetraKitLogPath = process.env.TETRA_KIT_LOG_PATH || '';
 const isDev = process.env.TS_NODE_DEV === 'true' ? true : false;
 const isSecure = process.env.SECURE === 'true' ? true : false;
 const isPublic = process.env.PUBLIC === 'true' ? true : false;
@@ -122,7 +125,7 @@ server.listen(serverPort, () => {
                     size: fileStat.size,
                     ts: fileStat.mtime.getTime(),
                 }
-                addToHistory( newRecording );
+                addToHistory(newRecording);
                 io.emit('newRecording', newRecording);
                 delete knownFiles[fileName];
             })
@@ -157,4 +160,18 @@ io.on('connection', socket => {
     }, 3000);
     */
 });
+
+try {
+    const tail = new Tail(tetraKitLogPath);
+    tail.on('error', (error) => console.error(error));
+    tail.on('line', (line) => {
+        line = JSON.parse(line);
+        if (line.service === 'CMCE'
+        ) {
+            io.emit('cmceLog', line);
+        }
+    });
+} catch (error) {
+    console.error(error);
+}
 

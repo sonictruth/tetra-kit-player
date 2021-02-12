@@ -10,6 +10,7 @@ interface HistoryState extends State {
     add: (recording: Recording) => void,
 }
 
+
 const socket = io(location.origin);
 
 socket.on('connect', () => console.log('Connected...'));

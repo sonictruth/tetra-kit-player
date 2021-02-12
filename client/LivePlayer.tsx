@@ -53,7 +53,7 @@ export default () => {
     }, []);
 
     return (
-        <div>
+        <div className="live-player-container">
             { isPlaying &&
                 <div className="live-player-status">
                     {queueSize === 0
