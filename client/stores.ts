@@ -17,8 +17,6 @@ socket.on('connect', () => console.log('Connected...'));
 socket.on('disconnect', () => console.error('Disconnected. Try reloading the page.'));
 socket.on('init', () => console.log('Waiting for new messages...'));
 socket.on('message', message => console.log(message));
-socket.on('newfile', fileName => console.log(fileName));
-
 
 export const useHistoryStore = create<HistoryState>(set => ({
     socket: socket,
