@@ -168,7 +168,7 @@ try {
         const parsedLine = JSON.parse(line);
         if (parsedLine.service === 'CMCE'
         ) {
-            io.emit('cmceLog', line);
+            io.emit('cmceLog', parsedLine);
         }
     });
 } catch (error) {
