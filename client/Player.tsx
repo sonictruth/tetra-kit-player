@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef } from "react";
 import WaveSurfer from "wavesurfer.js";
 import { Button, Tooltip, Row, Col } from "antd";
 import {
-    PlayCircleOutlined,
-    PauseCircleOutlined,
+    CaretRightOutlined,
+    PauseOutlined,
     CloudDownloadOutlined,
 } from "@ant-design/icons";
 
@@ -62,15 +62,17 @@ export default (props: {
     };
     return (
         <>
-            <div className="player">
+            <div className="player" style={{borderRadius: props.height}}>
                 <Row align="middle">
                     <Col flex="30px">
                         <Tooltip title={isPlaying ? "Stop" : "Play"}>
                             <Button
+                                size="large"
+                                style={{height: props.height, width:  props.height}}
                                 onClick={() => handlePlayPause()}
                                 shape="circle"
                                 icon={
-                                    isPlaying ? <PauseCircleOutlined /> : <PlayCircleOutlined />
+                                    isPlaying ? <PauseOutlined /> : <CaretRightOutlined />
                                 }
                             />
                         </Tooltip>
@@ -81,6 +83,8 @@ export default (props: {
                     <Col flex="30px">
                         <Tooltip title="Download">
                             <Button
+                                size="large"
+                                style={{height: props.height, width:  props.height}}
                                 onClick={() => handleDownload()}
                                 shape="circle"
                                 icon={<CloudDownloadOutlined />}

@@ -59,7 +59,7 @@ const columns: ColumnsType<Recording> = [
         title: "Audio",
         width: "30%",
         dataIndex: "url",
-        render: (url) => <Player height={30} url={url} />,
+        render: (url) => <Player height={40} url={url} />,
     },
 ];
 
@@ -158,7 +158,7 @@ export default () => {
     return (
         <>
             <Table<Recording>
-                pagination={{ position: ["topRight", "bottomRight"], pageSize: 5 }}
+                pagination={{ position: [ "bottomRight"], pageSize: 5 }}
                 rowKey="ts"
                 columns={columns}
                 dataSource={recordings}
