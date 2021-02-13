@@ -11,7 +11,7 @@ interface HistoryState extends State {
 }
 
 
-const socket = io(location.origin);
+const socket = io();
 
 socket.on('connect', () => console.log('Connected...'));
 socket.on('disconnect', () => console.error('Disconnected. Try reloading the page.'));
