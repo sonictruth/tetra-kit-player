@@ -36,6 +36,7 @@
     "@types/socket.io-client": "^1.4.35",
     "@types/tail": "^2.0.0",
     "@types/ws": "^7.4.0",
+    "babel-plugin-import": "^1.13.3",
     "dotenv": "^8.2.0",
     "parcel-bundler": "^1.12.4",
     "ts-node-dev": "^1.1.1",
