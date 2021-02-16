@@ -31,7 +31,7 @@ export default (props: {
         if (waveSurferDivRef.current) {
             waveSurferRef.current = WaveSurfer.create({
                 height: props.height,
-                backgroundColor: "#fafafa",
+                backgroundColor: "white",
                 container: waveSurferDivRef.current,
             });
             if (props.url) {
