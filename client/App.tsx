@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 
 import {
     Layout,
     Row,
-    Col
+    Col,
+    Divider,
 } from 'antd';
 
 const {
@@ -43,6 +44,8 @@ export default () => {
 
                 <div className="site-layout-content">
                     <LivePlayer />
+                </div>
+                <div className="site-layout-content">
                     <History />
                 </div>
 

@@ -4,7 +4,6 @@ import React, {
 } from "react";
 import { ColumnsType } from "antd/es/table";
 import {
-    getNumberColor,
     timestampToDate,
     sizeToSeconds,
 } from "./utils";
@@ -13,18 +12,19 @@ import {
     Input,
     Button,
     Space,
+    DatePicker,
 } from "antd";
 import { SearchOutlined } from "@ant-design/icons";
 import Player from "./Player";
 import NumberAvatar from "./NumberAvatar";
 
 import { useHistoryStore } from "./stores";
-
+const { RangePicker } = DatePicker;
 
 
 const columns: ColumnsType<Recording> = [
     {
-        title: "Time",
+        title: "Date/Time",
         dataIndex: "ts",
         render: (ts: number) => <><pre>{timestampToDate(ts).date}<br />{timestampToDate(ts).time}</pre></>,
         sorter: {
@@ -67,13 +67,11 @@ export default () => {
     const [searchText, setSearchText] = useState<string>();
     const [searchedColumn, setSearchedColumn] = useState<string>();
     const loadHistory = useHistoryStore(state => state.load);
-    const add = useHistoryStore(state => state.add);
     const recordings = useHistoryStore(state => state.recordings);
   
     useEffect(() => {
         loadHistory();
     }, []);
-
 
     function handleSearch(selectedKeys, confirm, dataIndex) {
         confirm();
@@ -86,7 +84,7 @@ export default () => {
         setSearchText("");
     }
 
-    function getColumnSearchProps(dataIndex) {
+    function getColumnSearchProps(dataIndex, isDateRange = false) {
         return {
             filterDropdown: ({
                 setSelectedKeys,
@@ -95,8 +93,20 @@ export default () => {
                 clearFilters,
             }) => (
                 <div style={{ padding: 8 }}>
-                    <Input
-                        placeholder={`Search ${dataIndex}`}
+                    {isDateRange ? 
+                     <div style={{ paddingBottom: 8 }}>
+                            <RangePicker
+                                value={selectedKeys[0]}
+                                onChange={(momentRange) =>
+                                    setSelectedKeys([momentRange])
+                                }
+                                showTime
+                            />
+                    </div>
+                        
+                    :
+                        <Input
+                        placeholder={`Search ${dataIndex.toUpperCase()}`}
                         value={selectedKeys[0]}
                         onChange={(e) =>
                             setSelectedKeys(e.target.value ? [e.target.value] : [])
@@ -104,6 +114,8 @@ export default () => {
                         onPressEnter={() => handleSearch(selectedKeys, confirm, dataIndex)}
                         style={{ width: 188, marginBottom: 8, display: "block" }}
                     />
+                    }
+
                     <Space>
                         <Button
                             type="primary"
@@ -113,25 +125,13 @@ export default () => {
                             style={{ width: 90 }}
                         >
                             Search
-            </Button>
+                        </Button>
                         <Button
                             onClick={() => handleReset(clearFilters)}
                             size="small"
-                            style={{ width: 90 }}
-                        >
+                            style={{ width: 90 }}>
                             Reset
-            </Button>
-                        <Button
-                            type="link"
-                            size="small"
-                            onClick={() => {
-                                confirm({ closeDropdown: false });
-                                setSearchText(selectedKeys[0]);
-                                setSearchedColumn(dataIndex);
-                            }}
-                        >
-                            Filter
-            </Button>
+                        </Button>
                     </Space>
                 </div>
             ),
@@ -139,14 +139,27 @@ export default () => {
                 <SearchOutlined style={{ color: filtered ? "#1890ff" : undefined }} />
             ),
             onFilter: (value, record) =>
-                record[dataIndex]
-                    ? record[dataIndex]
-                        .toString()
-                        .toLowerCase()
-                        .includes(value.toLowerCase())
-                    : "",
+             {
+                if (typeof value === 'object') {
+                    const startDate = value[0].valueOf();
+                    const endDate = value[1].valueOf();
+                    const date = parseInt(record[dataIndex]);
+                    return date >= startDate && date <= endDate;
+                } else {
+                    return record[dataIndex]
+                        ? record[dataIndex]
+                            .toString()
+                            .toLowerCase()
+                            .includes(value.toLowerCase())
+                        : '';
+                }
+             },
         };
     }
+    columns[0] = {
+        ...columns[0],
+        ...getColumnSearchProps("ts", true),
+    };
     columns[2] = {
         ...columns[2],
         ...getColumnSearchProps("cid"),
@@ -158,7 +171,11 @@ export default () => {
     return (
         <>
             <Table<Recording>
-                pagination={{ position: [ "bottomRight"], pageSize: 5 }}
+                pagination={{ 
+                    position: [ "bottomRight"],
+                    defaultPageSize: 5,
+                    pageSizeOptions: ["5", "10", "50", "100", "200"]
+                 }}
                 rowKey="ts"
                 columns={columns}
                 dataSource={recordings}

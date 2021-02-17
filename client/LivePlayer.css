@@ -21,3 +21,7 @@
   .live-player-container {
     position: relative;
   }
+
+  .player {
+    background-color: white;
+  }
