@@ -22,3 +22,4 @@ export default function waitForFile(filePath: string): Promise<fs.Stats> {
       checkLoop();
     })
   };
+  
