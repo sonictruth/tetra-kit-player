@@ -9,12 +9,16 @@ import LogEmitter from './LogEmitter';
 import waitForFile from './waitForFile';
 import createServer from './createServer';
 
+import decoder from './decoder';
+
 import {
     tetraKitRawPath,
     rawExtension,
+    undecodedExtention,
     webAudioPathPrefix,
-    doneExtension,
+    processedExtension,
     tetraKitLogPath,
+    minimumFilesSize,
 } from './settings';
 
 if (!fs.existsSync(tetraKitRawPath)) {
@@ -23,8 +27,11 @@ if (!fs.existsSync(tetraKitRawPath)) {
 }
 
 createServer(async (app, io) => {
-    const knownFiles: KeyValue = {};
+
     const history = new History();
+
+    // FIXME: renamed is fired on append also so we need to keep a hash of known files
+    const processedFiles: KeyValue = {}; 
 
     const broadcastMessage = (message: string): void => {
         io.emit('message', message);
@@ -46,34 +53,47 @@ createServer(async (app, io) => {
         console.error('Log emitter failed: ', exception)
     }
 
-    fs.watch(tetraKitRawPath, (eventType, fileName) => {
-        const fullPathToRawFile = path.join(tetraKitRawPath, fileName);
+    fs.watch(tetraKitRawPath, async (eventType, fileName) => {
+        const unprocessedFilePath = path.join(tetraKitRawPath, fileName);
         if (
             eventType === 'rename' &&
-            fileName.endsWith(rawExtension) &&
-            !knownFiles[fileName] &&
-            fs.existsSync(fullPathToRawFile)
+            !processedFiles[fileName] &&
+            (fileName.endsWith(rawExtension) || fileName.endsWith(undecodedExtention)) &&
+            fs.existsSync(unprocessedFilePath)
         ) {
+            processedFiles[fileName] = true;
+            const processedFilePath = unprocessedFilePath + processedExtension;
+            const recordingURL = `${webAudioPathPrefix}/${fileName}${processedExtension}`;
 
             broadcastMessage('New file detected: ' + fileName);
-            waitForFile(fullPathToRawFile).then(fileStat => {
-                const fullPathToRawFileDone = fullPathToRawFile + doneExtension;
-                fs.renameSync(fullPathToRawFile, fullPathToRawFileDone);
+
+            const fileStat = await waitForFile(unprocessedFilePath);
 
 
-                const recordingURL = webAudioPathPrefix + '/' + fileName + doneExtension;
-                const newRecording: SimpleRecording = {
-                    url: recordingURL,
-                    size: fileStat.size,
-                    ts: fileStat.mtime.getTime(),
-                }
-                history.addToHistory(newRecording);
+            if (fileName.endsWith(rawExtension)) {
+                fs.renameSync(unprocessedFilePath, processedFilePath);
+            }
+            if (fileName.endsWith(undecodedExtention)) {
+                await decoder(unprocessedFilePath, processedExtension);
+                fs.unlinkSync(unprocessedFilePath);
+            }
 
-                broadcastMessage('Sending:  ' + fileName);
-                io.emit('newRecording', newRecording);
-                delete knownFiles[fileName];
-            })
-            knownFiles[fileName] = true;
+            if(fileStat.size < minimumFilesSize) {
+                broadcastMessage('Size too small skipping: ' + fileName);
+                return;
+            }
+      
+            const newRecording: SimpleRecording = {
+                url: recordingURL,
+                size: fileStat.size,
+                ts: fileStat.mtime.getTime(),
+            }
+
+            history.addToHistory(newRecording);
+
+            broadcastMessage('Sending:  ' + fileName);
+            io.emit('newRecording', newRecording);
+            delete processedFiles[fileName];
         }
     });
 });

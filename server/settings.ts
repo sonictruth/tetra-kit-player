@@ -3,7 +3,7 @@ export const webAudioPathPrefix = '/audio';
 export const tetraKitLogPath = process.env.TETRA_KIT_LOG_PATH || '';
 export const tetraKitRawPath = process.env.TETRA_KIT_PATH || '';
 export const rawExtension = '.raw';
-export const doneExtension = '.done';
+export const processedExtension = '.done';
 export const undecodedExtention = '.out';
 
 export const username = process.env.USERNAME || 'admin';
