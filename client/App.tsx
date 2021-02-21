@@ -38,12 +38,10 @@ export default () => {
                         <Col xs={24} className="main-col">
                             <LivePlayer />
                         </Col>
-                        <Col xs={24} xl={13} className="main-col">
+                        <Col xs={24} className="main-col">
                             <History />
                         </Col>
-                        <Col xs={24} xl={11} className="main-col">
-                            <Chart />
-                        </Col>
+                       
                     </Row>
                 </Content>
                 <Footer>&copy; CopyLeft 2021</Footer>
