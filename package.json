@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "ts-node-dev --experimental-wasi-unstable-preview1 --experimental-wasm-bigint --project ./server/tsconfig.json --respawn  ./server/index.ts",
     "start": "tsc --project ./server/tsconfig.json",
-    "poststart": "node --experimental-wasi-unstable-preview1  --experimental-wasm-bigint ./dist/index.js"
+    "poststart": "node --experimental-wasi-unstable-preview1  ./dist/index.js"
   },
   "engines": {
     "node": ">=12.18.1"
