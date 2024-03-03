@@ -58,7 +58,14 @@ export default (props: {
         }
     };
     const handleDownload = () => {
-        window.location.href = props.url;
+        var fileName = props.url.split('\/').pop().split(".raw.done")[0] + ".wav";
+        getRawAsWavBlob(props.url).then((newBlob) => {
+            var url = window.URL.createObjectURL(newBlob);
+            var link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', fileName);
+            link.click();
+        });        
     };
     return (
         <>
